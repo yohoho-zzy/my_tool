@@ -1,1 +1,71 @@
-<input type="color"/>
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>倒计时页面</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #121212;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .countdown {
+      text-align: center;
+      font-size: 2rem;
+      line-height: 1.5;
+    }
+    .time {
+      display: inline-block;
+      margin: 0 10px;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="countdown">
+    距离 2025 年末还有：<br>
+    <span class="time" id="days">0</span> 天
+    <span class="time" id="hours">0</span> 时
+    <span class="time" id="minutes">0</span> 分
+    <span class="time" id="seconds">0</span> 秒
+  </div>
+
+  <script>
+    const targetDate = new Date("2025-12-31T23:59:59");
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        document.querySelector('.countdown').innerHTML = "🎉 时间到了！新年快乐！";
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      document.getElementById("days").textContent = days;
+      document.getElementById("hours").textContent = hours;
+      document.getElementById("minutes").textContent = minutes;
+      document.getElementById("seconds").textContent = seconds;
+    }
+
+    updateCountdown(); // 初始化
+    setInterval(updateCountdown, 1000); // 每秒更新
+  </script>
+</body>
+</html>
