@@ -46,12 +46,8 @@
       line-height: 80px;
       text-align: center;
       text-shadow: 0 1px 1px rgba(255,255,255,0.3), 0 2px 3px rgba(0,0,0,0.6);
-      opacity: 1;
-      transition: opacity 0.3s ease;
-    }
-
-    .fade-out {
       opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     .fade-in {
@@ -113,24 +109,18 @@
     function animateValue(id, newValue) {
       const container = document.getElementById(id).parentElement;
       const oldEl = document.getElementById(id);
+      if (oldEl) oldEl.remove(); // 先移除旧元素，避免重影
 
       const newEl = document.createElement("div");
-      newEl.className = "value fade-in";
+      newEl.className = "value";
       newEl.textContent = newValue;
-      newEl.style.opacity = "0";
-      newEl.id = id + "-new";
-
+      newEl.id = id;
       container.appendChild(newEl);
-      void newEl.offsetWidth;
 
-      oldEl.classList.remove("fade-in");
-      oldEl.classList.add("fade-out");
-      newEl.style.opacity = "1";
-
-      setTimeout(() => {
-        oldEl.remove();
-        newEl.id = id;
-      }, 300);
+      // 延迟一个帧触发淡入动画
+      requestAnimationFrame(() => {
+        newEl.classList.add("fade-in");
+      });
     }
 
     function updateCountdown() {
@@ -140,7 +130,10 @@
       const diff = targetDate - now;
 
       if (diff <= 0) {
-        ids.forEach(id => document.getElementById(id).textContent = "00");
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = "00";
+        });
         return;
       }
 
