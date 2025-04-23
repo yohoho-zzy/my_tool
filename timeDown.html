@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>立体数字倒计时</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .countdown-container {
+      display: flex;
+      gap: 12px;
+      text-align: center;
+    }
+
+    .value-container {
+      position: relative;
+      width: 70px;
+      height: 80px;
+      background: #222;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .value {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: white;
+      line-height: 80px;
+      text-align: center;
+      text-shadow: 0 1px 1px rgba(255,255,255,0.3), 0 2px 3px rgba(0,0,0,0.6);
+      transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+
+    .slide-out {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+
+    .slide-in {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="countdown-container">
+    <div class="value-container"><div class="value slide-in" id="days">000</div></div>
+    <div class="value-container"><div class="value slide-in" id="hours">00</div></div>
+    <div class="value-container"><div class="value slide-in" id="minutes">00</div></div>
+    <div class="value-container"><div class="value slide-in" id="seconds">00</div></div>
+  </div>
+
+  <script>
+    const ids = ["days", "hours", "minutes", "seconds"];
+    let prevValues = ["", "", "", ""];
+    let targetDate = null;
+
+    function getTargetFromURL() {
+      const params = new URLSearchParams(location.search);
+      const targetStr = params.get("target");
+      if (!targetStr || !/^\d{14}$/.test(targetStr)) return null;
+
+      const year = +targetStr.slice(0, 4);
+      const month = +targetStr.slice(4, 6) - 1;
+      const day = +targetStr.slice(6, 8);
+      const hour = +targetStr.slice(8, 10);
+      const minute = +targetStr.slice(10, 12);
+      const second = +targetStr.slice(12, 14);
+
+      return new Date(year, month, day, hour, minute, second);
+    }
+
+    function format(n, digits = 2) {
+      return n.toString().padStart(digits, "0");
+    }
+
+    function animateValue(id, newValue) {
+      const container = document.getElementById(id).parentElement;
+      const oldEl = document.getElementById(id);
+      const newEl = document.createElement("div");
+
+      newEl.className = "value slide-in";
+      newEl.textContent = newValue;
+      newEl.style.transform = "translateY(100%)";
+      newEl.style.opacity = "0";
+      newEl.id = id + "-new";
+
+      container.appendChild(newEl);
+      void newEl.offsetWidth;
+
+      oldEl.classList.add("slide-out");
+      newEl.style.transform = "translateY(0)";
+      newEl.style.opacity = "1";
+
+      setTimeout(() => {
+        oldEl.remove();
+        newEl.id = id;
+      }, 400);
+    }
+
+    function updateCountdown() {
+      if (!targetDate) return;
+
+      const now = new Date();
+      const diff = targetDate - now;
+
+      if (diff <= 0) {
+        ids.forEach(id => document.getElementById(id).textContent = "00");
+        return;
+      }
+
+      const timeLeft = [
+        Math.floor(diff / (1000 * 60 * 60 * 24)),       // 天
+        Math.floor((diff / (1000 * 60 * 60)) % 24),      // 时
+        Math.floor((diff / (1000 * 60)) % 60),           // 分
+        Math.floor((diff / 1000) % 60)                   // 秒
+      ];
+
+      timeLeft.forEach((val, i) => {
+        const id = ids[i];
+        const digits = id === "days" ? 3 : 2;
+        const newVal = format(val, digits);
+        if (prevValues[i] !== newVal) {
+          animateValue(id, newVal);
+          prevValues[i] = newVal;
+        }
+      });
+    }
+
+    targetDate = getTargetFromURL();
+    if (!targetDate) {
+      document.body.innerHTML = "<h2 style='color:#333;'>请使用 ?target=20251120235959 格式传入目标时间</h2>";
+    } else {
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    }
+  </script>
+</body>
+</html>
