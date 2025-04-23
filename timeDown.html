@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>立体数字倒计时</title>
+  <title>倒计时</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -16,8 +16,14 @@
 
     .countdown-container {
       display: flex;
-      gap: 12px;
+      gap: 16px;
       text-align: center;
+    }
+
+    .unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .value-container {
@@ -40,27 +46,45 @@
       line-height: 80px;
       text-align: center;
       text-shadow: 0 1px 1px rgba(255,255,255,0.3), 0 2px 3px rgba(0,0,0,0.6);
-      transition: transform 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
-    .slide-out {
-      transform: translateY(-100%);
+    .fade-out {
       opacity: 0;
     }
 
-    .slide-in {
-      transform: translateY(0);
+    .fade-in {
       opacity: 1;
+      transform: scale(1.05);
+    }
+
+    .label {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #333;
     }
   </style>
 </head>
 <body>
 
   <div class="countdown-container">
-    <div class="value-container"><div class="value slide-in" id="days">000</div></div>
-    <div class="value-container"><div class="value slide-in" id="hours">00</div></div>
-    <div class="value-container"><div class="value slide-in" id="minutes">00</div></div>
-    <div class="value-container"><div class="value slide-in" id="seconds">00</div></div>
+    <div class="unit">
+      <div class="value-container"><div class="value fade-in" id="days">000</div></div>
+      <div class="label">天</div>
+    </div>
+    <div class="unit">
+      <div class="value-container"><div class="value fade-in" id="hours">00</div></div>
+      <div class="label">时</div>
+    </div>
+    <div class="unit">
+      <div class="value-container"><div class="value fade-in" id="minutes">00</div></div>
+      <div class="label">分</div>
+    </div>
+    <div class="unit">
+      <div class="value-container"><div class="value fade-in" id="seconds">00</div></div>
+      <div class="label">秒</div>
+    </div>
   </div>
 
   <script>
@@ -90,25 +114,23 @@
     function animateValue(id, newValue) {
       const container = document.getElementById(id).parentElement;
       const oldEl = document.getElementById(id);
-      const newEl = document.createElement("div");
 
-      newEl.className = "value slide-in";
+      const newEl = document.createElement("div");
+      newEl.className = "value fade-in";
       newEl.textContent = newValue;
-      newEl.style.transform = "translateY(100%)";
       newEl.style.opacity = "0";
       newEl.id = id + "-new";
 
       container.appendChild(newEl);
       void newEl.offsetWidth;
 
-      oldEl.classList.add("slide-out");
-      newEl.style.transform = "translateY(0)";
-      newEl.style.opacity = "1";
+      oldEl.classList.remove("fade-in");
+      oldEl.classList.add("fade-out");
 
       setTimeout(() => {
         oldEl.remove();
         newEl.id = id;
-      }, 400);
+      }, 300);
     }
 
     function updateCountdown() {
@@ -123,10 +145,10 @@
       }
 
       const timeLeft = [
-        Math.floor(diff / (1000 * 60 * 60 * 24)),       // 天
-        Math.floor((diff / (1000 * 60 * 60)) % 24),      // 时
-        Math.floor((diff / (1000 * 60)) % 60),           // 分
-        Math.floor((diff / 1000) % 60)                   // 秒
+        Math.floor(diff / (1000 * 60 * 60 * 24)),
+        Math.floor((diff / (1000 * 60 * 60)) % 24),
+        Math.floor((diff / (1000 * 60)) % 60),
+        Math.floor((diff / 1000) % 60)
       ];
 
       timeLeft.forEach((val, i) => {
