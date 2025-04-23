@@ -67,12 +67,16 @@
 
   <script>
     async function getLocation() {
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-          err => reject(err)
-        );
-      });
+      try {
+        return await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+            () => resolve({ lat: 35.6764, lon: 139.6500, fallback: true }) // 默认东京
+          );
+        });
+      } catch {
+        return { lat: 35.6764, lon: 139.6500, fallback: true }; // 默认东京
+      }
     }
 
     async function getCoordinates(city) {
@@ -88,24 +92,12 @@
 
     function getWeatherDescription(code) {
       const map = {
-        0: ["晴天", "☀️"],
-        1: ["多云", "🌤"],
-        2: ["部分多云", "⛅"],
-        3: ["阴天", "☁️"],
-        45: ["薄雾", "🌫"],
-        48: ["雾霭", "🌫"],
-        51: ["小毛毛雨", "🌦"],
-        53: ["中毛毛雨", "🌧"],
-        55: ["大毛毛雨", "🌧"],
-        61: ["小雨", "🌧"],
-        63: ["中雨", "🌧"],
-        65: ["大雨", "🌧"],
-        71: ["小雪", "🌨"],
-        73: ["中雪", "❄️"],
-        75: ["大雪", "❄️"],
-        95: ["雷阵雨", "⛈"],
-        96: ["雷阵雨伴小冰雹", "⛈"],
-        99: ["雷阵雨伴大冰雹", "⛈"]
+        0: ["晴天", "☀️"], 1: ["多云", "🌤"], 2: ["部分多云", "⛅"], 3: ["阴天", "☁️"],
+        45: ["薄雾", "🌫"], 48: ["雾霭", "🌫"],
+        51: ["小毛毛雨", "🌦"], 53: ["中毛毛雨", "🌧"], 55: ["大毛毛雨", "🌧"],
+        61: ["小雨", "🌧"], 63: ["中雨", "🌧"], 65: ["大雨", "🌧"],
+        71: ["小雪", "🌨"], 73: ["中雪", "❄️"], 75: ["大雪", "❄️"],
+        95: ["雷阵雨", "⛈"], 96: ["雷阵雨伴小冰雹", "⛈"], 99: ["雷阵雨伴大冰雹", "⛈"]
       };
       return map[code] || ["未知", "❓"];
     }
@@ -119,12 +111,11 @@
       const currentHour = now.getHours();
 
       if (!city) {
-        // 显示当前位置的今天每小时天气
         try {
           const loc = await getLocation();
           const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weathercode&timezone=auto`);
           const data = await res.json();
-          document.getElementById("title").textContent = "当前位置 - 今日每小时天气";
+          document.getElementById("title").textContent = (loc.fallback ? "默认位置（东京）" : "当前位置") + " - 今日每小时天气";
 
           const hours = data.hourly.time;
           const temps = data.hourly.temperature_2m;
@@ -147,12 +138,11 @@
             container.appendChild(box);
           }
         } catch (e) {
-          container.textContent = "无法获取当前位置或天气数据。";
+          container.textContent = "无法获取天气数据。";
         }
         return;
       }
 
-      // 城市+天数模式
       try {
         const { lat, lon, name } = await getCoordinates(city);
         const forecast = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max,weathercode&timezone=auto&forecast_days=${days}`)
