@@ -2,70 +2,129 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>倒计时页面</title>
+  <title>翻牌倒计时</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #121212;
-      color: #fff;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: 'Segoe UI', sans-serif;
     }
-    .countdown {
+
+    .countdown-container {
+      display: flex;
+      gap: 20px;
       text-align: center;
-      font-size: 2rem;
-      line-height: 1.5;
     }
-    .time {
-      display: inline-block;
-      margin: 0 10px;
-      animation: pulse 1s infinite;
+
+    .unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    @keyframes pulse {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.8; }
-      100% { transform: scale(1); opacity: 1; }
+
+    .label {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #666;
+    }
+
+    .flip-card {
+      perspective: 1000px;
+    }
+
+    .flip-card-inner {
+      width: 80px;
+      height: 100px;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #333;
+      background: #f0f0f0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.6s ease-in-out;
+      transform-style: preserve-3d;
+    }
+
+    .flip {
+      animation: flip 0.6s ease-in-out;
+    }
+
+    @keyframes flip {
+      0% { transform: rotateX(0); }
+      50% { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
     }
   </style>
 </head>
 <body>
-  <div class="countdown">
-    距离 2025 年末还有：<br>
-    <span class="time" id="days">0</span> 天
-    <span class="time" id="hours">0</span> 时
-    <span class="time" id="minutes">0</span> 分
-    <span class="time" id="seconds">0</span> 秒
+  <div class="countdown-container">
+    <div class="unit">
+      <div class="flip-card"><div class="flip-card-inner" id="days">00</div></div>
+      <div class="label">天</div>
+    </div>
+    <div class="unit">
+      <div class="flip-card"><div class="flip-card-inner" id="hours">00</div></div>
+      <div class="label">时</div>
+    </div>
+    <div class="unit">
+      <div class="flip-card"><div class="flip-card-inner" id="minutes">00</div></div>
+      <div class="label">分</div>
+    </div>
+    <div class="unit">
+      <div class="flip-card"><div class="flip-card-inner" id="seconds">00</div></div>
+      <div class="label">秒</div>
+    </div>
   </div>
 
   <script>
     const targetDate = new Date("2025-12-31T23:59:59");
+    const ids = ["days", "hours", "minutes", "seconds"];
+    let prevValues = ["", "", "", ""];
+
+    function format(n) {
+      return n.toString().padStart(2, "0");
+    }
 
     function updateCountdown() {
       const now = new Date();
       const diff = targetDate - now;
 
       if (diff <= 0) {
-        document.querySelector('.countdown').innerHTML = "🎉 时间到了！新年快乐！";
+        ids.forEach(id => {
+          document.getElementById(id).textContent = "00";
+        });
         return;
       }
 
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
+      const timeLeft = [
+        Math.floor(diff / (1000 * 60 * 60 * 24)),       // 天
+        Math.floor((diff / (1000 * 60 * 60)) % 24),      // 时
+        Math.floor((diff / (1000 * 60)) % 60),           // 分
+        Math.floor((diff / 1000) % 60)                   // 秒
+      ];
 
-      document.getElementById("days").textContent = days;
-      document.getElementById("hours").textContent = hours;
-      document.getElementById("minutes").textContent = minutes;
-      document.getElementById("seconds").textContent = seconds;
+      timeLeft.forEach((val, i) => {
+        const el = document.getElementById(ids[i]);
+        const newVal = format(val);
+        if (prevValues[i] !== newVal) {
+          el.textContent = newVal;
+          el.classList.remove("flip");
+          void el.offsetWidth; // 强制重绘触发动画
+          el.classList.add("flip");
+          prevValues[i] = newVal;
+        }
+      });
     }
 
-    updateCountdown(); // 初始化
-    setInterval(updateCountdown, 1000); // 每秒更新
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
   </script>
 </body>
 </html>
