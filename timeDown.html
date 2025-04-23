@@ -111,27 +111,30 @@
       return n.toString().padStart(digits, "0");
     }
 
-    function animateValue(id, newValue) {
-      const container = document.getElementById(id).parentElement;
-      const oldEl = document.getElementById(id);
+function animateValue(id, newValue) {
+  const container = document.getElementById(id).parentElement;
+  const oldEl = document.getElementById(id);
 
-      const newEl = document.createElement("div");
-      newEl.className = "value fade-in";
-      newEl.textContent = newValue;
-      newEl.style.opacity = "0";
-      newEl.id = id + "-new";
+  const newEl = document.createElement("div");
+  newEl.className = "value fade-in";
+  newEl.textContent = newValue;
+  newEl.style.opacity = "0";
+  newEl.style.transform = "none"; // 修复初始 transform 问题
+  newEl.id = id + "-new";
 
-      container.appendChild(newEl);
-      void newEl.offsetWidth;
+  container.appendChild(newEl);
+  void newEl.offsetWidth;
 
-      oldEl.classList.remove("fade-in");
-      oldEl.classList.add("fade-out");
+  // 动画效果
+  oldEl.classList.remove("fade-in");
+  oldEl.classList.add("fade-out");
+  newEl.style.opacity = "1";
 
-      setTimeout(() => {
-        oldEl.remove();
-        newEl.id = id;
-      }, 300);
-    }
+  setTimeout(() => {
+    oldEl.remove();
+    newEl.id = id;
+  }, 300);
+}
 
     function updateCountdown() {
       if (!targetDate) return;
