@@ -2,7 +2,6 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>翻牌倒计时</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -32,11 +31,7 @@
       color: #666;
     }
 
-    .flip-card {
-      perspective: 1000px;
-    }
-
-    .flip-card-inner {
+    .value {
       width: 80px;
       height: 100px;
       font-size: 2.5rem;
@@ -47,44 +42,47 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      transition: transform 0.6s ease-in-out;
-      transform-style: preserve-3d;
+      transition: all 0.3s ease;
     }
 
-    .flip {
-      animation: flip 0.6s ease-in-out;
+    .fade-animate {
+      animation: fadeZoom 0.4s ease-in-out;
     }
 
-    @keyframes flip {
-      0% { transform: rotateX(0); }
-      50% { transform: rotateX(90deg); }
-      100% { transform: rotateX(0deg); }
+    @keyframes fadeZoom {
+      0% {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
   </style>
 </head>
 <body>
   <div class="countdown-container">
     <div class="unit">
-      <div class="flip-card"><div class="flip-card-inner" id="days">00</div></div>
+      <div class="value" id="days">00</div>
       <div class="label">天</div>
     </div>
     <div class="unit">
-      <div class="flip-card"><div class="flip-card-inner" id="hours">00</div></div>
+      <div class="value" id="hours">00</div>
       <div class="label">时</div>
     </div>
     <div class="unit">
-      <div class="flip-card"><div class="flip-card-inner" id="minutes">00</div></div>
+      <div class="value" id="minutes">00</div>
       <div class="label">分</div>
     </div>
     <div class="unit">
-      <div class="flip-card"><div class="flip-card-inner" id="seconds">00</div></div>
+      <div class="value" id="seconds">00</div>
       <div class="label">秒</div>
     </div>
   </div>
 
   <script>
-    const targetDate = new Date("2025-12-31T23:59:59");
+    const targetDate = new Date("2025-11-20T23:59:59");
     const ids = ["days", "hours", "minutes", "seconds"];
     let prevValues = ["", "", "", ""];
 
@@ -115,9 +113,9 @@
         const newVal = format(val);
         if (prevValues[i] !== newVal) {
           el.textContent = newVal;
-          el.classList.remove("flip");
-          void el.offsetWidth; // 强制重绘触发动画
-          el.classList.add("flip");
+          el.classList.remove("fade-animate");
+          void el.offsetWidth; // 触发重绘以重启动画
+          el.classList.add("fade-animate");
           prevValues[i] = newVal;
         }
       });
