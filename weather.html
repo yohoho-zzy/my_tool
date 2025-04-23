@@ -55,6 +55,10 @@
       font-size: 1.8rem;
       margin-bottom: 4px;
     }
+    .highlight {
+      background-color: #ffefc2;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -62,6 +66,15 @@
   <div class="weather-container" id="weather"></div>
 
   <script>
+    async function getLocation() {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          err => reject(err)
+        );
+      });
+    }
+
     async function getCoordinates(city) {
       const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh`);
       const data = await res.json();
@@ -71,11 +84,6 @@
         lon: data.results[0].longitude,
         name: data.results[0].name
       };
-    }
-
-    async function getForecast(lat, lon, days) {
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max,weathercode&timezone=auto&forecast_days=${days}`);
-      return await res.json();
     }
 
     function getWeatherDescription(code) {
@@ -104,15 +112,53 @@
 
     async function init() {
       const params = new URLSearchParams(location.search);
-      const city = params.get("city") || "Tokyo";
+      const city = params.get("city");
       const days = parseInt(params.get("days") || "3");
+      const container = document.getElementById("weather");
+      const now = new Date();
+      const currentHour = now.getHours();
 
+      if (!city) {
+        // 显示当前位置的今天每小时天气
+        try {
+          const loc = await getLocation();
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weathercode&timezone=auto`);
+          const data = await res.json();
+          document.getElementById("title").textContent = "当前位置 - 今日每小时天气";
+
+          const hours = data.hourly.time;
+          const temps = data.hourly.temperature_2m;
+          const codes = data.hourly.weathercode;
+
+          for (let i = 0; i < hours.length; i++) {
+            const hourStr = hours[i].slice(11, 16);
+            if (!hours[i].startsWith(now.toISOString().slice(0, 10))) continue;
+
+            const box = document.createElement("div");
+            box.className = "day-box" + (parseInt(hourStr.slice(0, 2)) === currentHour ? " highlight" : "");
+            const [desc, icon] = getWeatherDescription(codes[i]);
+            const tempClass = temps[i] >= 30 ? "hot" : temps[i] <= 5 ? "cold" : "";
+            box.innerHTML = `
+              <h3>${hourStr}</h3>
+              <div class="weather-icon">${icon}</div>
+              <div class="weather-type">${desc}</div>
+              <div class="temp ${tempClass}">${temps[i]}℃</div>
+            `;
+            container.appendChild(box);
+          }
+        } catch (e) {
+          container.textContent = "无法获取当前位置或天气数据。";
+        }
+        return;
+      }
+
+      // 城市+天数模式
       try {
         const { lat, lon, name } = await getCoordinates(city);
-        const forecast = await getForecast(lat, lon, days);
+        const forecast = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max,weathercode&timezone=auto&forecast_days=${days}`)
+          .then(res => res.json());
 
         document.getElementById("title").textContent = `${name} - ${days}天天气预报`;
-        const container = document.getElementById("weather");
         const daily = forecast.daily;
 
         for (let i = 0; i < days; i++) {
@@ -139,7 +185,7 @@
           container.appendChild(box);
         }
       } catch (err) {
-        document.getElementById("weather").textContent = "获取天气失败，请检查城市名或网络";
+        container.textContent = "获取天气失败，请检查城市名或网络";
       }
     }
 
