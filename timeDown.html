@@ -46,22 +46,22 @@
       line-height: 80px;
       text-align: center;
       text-shadow: 0 1px 1px rgba(255,255,255,0.3), 0 2px 3px rgba(0,0,0,0.6);
-      opacity: 1;
       transform: translateY(0);
-      transition: all 0.4s ease;
+      opacity: 1;
+      transition: transform 0.4s ease, opacity 0.4s ease;
     }
 
-    .slide-out-up {
+    .slide-out {
       transform: translateY(-100%);
       opacity: 0;
     }
 
-    .slide-in-up {
+    .slide-in {
       transform: translateY(100%);
       opacity: 0;
     }
 
-    .slide-in-up-active {
+    .slide-in-active {
       transform: translateY(0);
       opacity: 1;
     }
@@ -103,14 +103,12 @@
       const params = new URLSearchParams(location.search);
       const targetStr = params.get("target");
       if (!targetStr || !/^\d{14}$/.test(targetStr)) return null;
-
       const year = +targetStr.slice(0, 4);
       const month = +targetStr.slice(4, 6) - 1;
       const day = +targetStr.slice(6, 8);
       const hour = +targetStr.slice(8, 10);
       const minute = +targetStr.slice(10, 12);
       const second = +targetStr.slice(12, 14);
-
       return new Date(year, month, day, hour, minute, second);
     }
 
@@ -121,20 +119,20 @@
     function animateValue(id, newValue) {
       const container = document.getElementById(id).parentElement;
       const oldEl = document.getElementById(id);
-
       const newEl = document.createElement("div");
-      newEl.className = "value slide-in-up";
+
+      newEl.className = "value slide-in";
       newEl.textContent = newValue;
       newEl.id = id + "-new";
       container.appendChild(newEl);
 
-      // 触发动画
+      // 下一帧触发入场动画
       requestAnimationFrame(() => {
-        if (oldEl) oldEl.classList.add("slide-out-up");
-        newEl.classList.add("slide-in-up-active");
+        newEl.classList.add("slide-in-active");
+        if (oldEl) oldEl.classList.add("slide-out");
       });
 
-      // 移除旧元素并替换 ID
+      // 完成后清理旧元素、ID还原
       setTimeout(() => {
         if (oldEl) oldEl.remove();
         newEl.id = id;
