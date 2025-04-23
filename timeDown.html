@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>滚动倒计时</title>
+  <title>真正滑动数字切换</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -27,42 +27,52 @@
     }
 
     .value-container {
-      position: relative;
       width: 70px;
       height: 80px;
       background: #222;
       border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       overflow: hidden;
+      position: relative;
     }
 
-    .value {
+    .value-wrapper {
       position: absolute;
       width: 100%;
       height: 100%;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+    }
+
+    .digit {
+      width: 100%;
+      height: 100%;
+      line-height: 80px;
+      text-align: center;
       font-size: 2.2rem;
       font-weight: bold;
       color: white;
-      line-height: 80px;
-      text-align: center;
+      position: absolute;
+      left: 0;
       text-shadow: 0 1px 1px rgba(255,255,255,0.3), 0 2px 3px rgba(0,0,0,0.6);
-      transform: translateY(0);
+      transform: translateY(0%);
       opacity: 1;
       transition: transform 0.4s ease, opacity 0.4s ease;
     }
 
-    .slide-out {
+    .digit.exit {
       transform: translateY(-100%);
       opacity: 0;
     }
 
-    .slide-in {
+    .digit.enter {
       transform: translateY(100%);
       opacity: 0;
     }
 
-    .slide-in-active {
-      transform: translateY(0);
+    .digit.enter.active {
+      transform: translateY(0%);
       opacity: 1;
     }
 
@@ -77,19 +87,35 @@
 
   <div class="countdown-container">
     <div class="unit">
-      <div class="value-container"><div class="value" id="days">000</div></div>
+      <div class="value-container">
+        <div class="value-wrapper" id="days-wrapper">
+          <div class="digit" id="days">000</div>
+        </div>
+      </div>
       <div class="label">天</div>
     </div>
     <div class="unit">
-      <div class="value-container"><div class="value" id="hours">00</div></div>
+      <div class="value-container">
+        <div class="value-wrapper" id="hours-wrapper">
+          <div class="digit" id="hours">00</div>
+        </div>
+      </div>
       <div class="label">时</div>
     </div>
     <div class="unit">
-      <div class="value-container"><div class="value" id="minutes">00</div></div>
+      <div class="value-container">
+        <div class="value-wrapper" id="minutes-wrapper">
+          <div class="digit" id="minutes">00</div>
+        </div>
+      </div>
       <div class="label">分</div>
     </div>
     <div class="unit">
-      <div class="value-container"><div class="value" id="seconds">00</div></div>
+      <div class="value-container">
+        <div class="value-wrapper" id="seconds-wrapper">
+          <div class="digit" id="seconds">00</div>
+        </div>
+      </div>
       <div class="label">秒</div>
     </div>
   </div>
@@ -117,24 +143,25 @@
     }
 
     function animateValue(id, newValue) {
-      const container = document.getElementById(id).parentElement;
+      const wrapper = document.getElementById(`${id}-wrapper`);
       const oldEl = document.getElementById(id);
-      const newEl = document.createElement("div");
 
-      newEl.className = "value slide-in";
+      // 创建新元素并设置初始位置
+      const newEl = document.createElement("div");
+      newEl.className = "digit enter";
       newEl.textContent = newValue;
       newEl.id = id + "-new";
-      container.appendChild(newEl);
+      wrapper.appendChild(newEl);
 
-      // 下一帧触发入场动画
+      // 触发入场动画
       requestAnimationFrame(() => {
-        newEl.classList.add("slide-in-active");
-        if (oldEl) oldEl.classList.add("slide-out");
+        newEl.classList.add("active");
+        oldEl.classList.add("exit");
       });
 
-      // 完成后清理旧元素、ID还原
+      // 动画完成后清理旧元素并重命名新元素
       setTimeout(() => {
-        if (oldEl) oldEl.remove();
+        oldEl.remove();
         newEl.id = id;
       }, 400);
     }
