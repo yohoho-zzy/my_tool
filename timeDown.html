@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>倒计时</title>
+  <title>滚动倒计时</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -46,11 +46,23 @@
       line-height: 80px;
       text-align: center;
       text-shadow: 0 1px 1px rgba(255,255,255,0.3), 0 2px 3px rgba(0,0,0,0.6);
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      opacity: 1;
+      transform: translateY(0);
+      transition: all 0.4s ease;
     }
 
-    .fade-in {
+    .slide-out-up {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+
+    .slide-in-up {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+
+    .slide-in-up-active {
+      transform: translateY(0);
       opacity: 1;
     }
 
@@ -65,19 +77,19 @@
 
   <div class="countdown-container">
     <div class="unit">
-      <div class="value-container"><div class="value fade-in" id="days">000</div></div>
+      <div class="value-container"><div class="value" id="days">000</div></div>
       <div class="label">天</div>
     </div>
     <div class="unit">
-      <div class="value-container"><div class="value fade-in" id="hours">00</div></div>
+      <div class="value-container"><div class="value" id="hours">00</div></div>
       <div class="label">时</div>
     </div>
     <div class="unit">
-      <div class="value-container"><div class="value fade-in" id="minutes">00</div></div>
+      <div class="value-container"><div class="value" id="minutes">00</div></div>
       <div class="label">分</div>
     </div>
     <div class="unit">
-      <div class="value-container"><div class="value fade-in" id="seconds">00</div></div>
+      <div class="value-container"><div class="value" id="seconds">00</div></div>
       <div class="label">秒</div>
     </div>
   </div>
@@ -109,18 +121,24 @@
     function animateValue(id, newValue) {
       const container = document.getElementById(id).parentElement;
       const oldEl = document.getElementById(id);
-      if (oldEl) oldEl.remove(); // 先移除旧元素，避免重影
 
       const newEl = document.createElement("div");
-      newEl.className = "value";
+      newEl.className = "value slide-in-up";
       newEl.textContent = newValue;
-      newEl.id = id;
+      newEl.id = id + "-new";
       container.appendChild(newEl);
 
-      // 延迟一个帧触发淡入动画
+      // 触发动画
       requestAnimationFrame(() => {
-        newEl.classList.add("fade-in");
+        if (oldEl) oldEl.classList.add("slide-out-up");
+        newEl.classList.add("slide-in-up-active");
       });
+
+      // 移除旧元素并替换 ID
+      setTimeout(() => {
+        if (oldEl) oldEl.remove();
+        newEl.id = id;
+      }, 400);
     }
 
     function updateCountdown() {
