@@ -15,7 +15,6 @@
       font-family: Arial, sans-serif;
       overflow: hidden;
     }
-
     .calculator {
       background: #222;
       padding: 20px;
@@ -26,24 +25,29 @@
       position: relative;
       z-index: 10;
     }
-
     .display {
       background: #111;
       color: #0f0;
       font-size: 2em;
       padding: 10px;
       border-radius: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 4px;
       text-align: right;
       overflow-x: auto;
     }
-
+    .expression {
+      color: #aaa;
+      font-size: 0.75em;
+      text-align: right;
+      height: 1em;
+      padding-right: 10px;
+      margin-bottom: 10px;
+    }
     .buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
     }
-
     .buttons button {
       padding: 20px;
       font-size: 1.2em;
@@ -54,11 +58,9 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-
     .buttons button:hover {
       background: #444;
     }
-
     .money {
       position: absolute;
       font-size: 36px;
@@ -67,7 +69,6 @@
       z-index: 1;
       opacity: 0;
     }
-
     @keyframes explode {
       0% {
         opacity: 1;
@@ -78,7 +79,6 @@
         transform: translate(var(--x), var(--y)) rotate(1080deg) scale(0.6);
       }
     }
-
     .flash {
       position: fixed;
       top: 0;
@@ -90,16 +90,13 @@
       z-index: 100;
       pointer-events: none;
     }
-
     @keyframes flashfade {
       from { opacity: 0.3; }
       to { opacity: 0; }
     }
-
     .shake {
       animation: shake 0.3s;
     }
-
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       25% { transform: translateX(-5px); }
@@ -111,33 +108,31 @@
 <body>
   <div class="calculator" id="calc">
     <div class="display" id="display">0</div>
+    <div class="expression" id="expression">&nbsp;</div>
     <div class="buttons">
       <button onclick="press('7')">7</button>
       <button onclick="press('8')">8</button>
       <button onclick="press('9')">9</button>
       <button onclick="press('/')">/</button>
-
       <button onclick="press('4')">4</button>
       <button onclick="press('5')">5</button>
       <button onclick="press('6')">6</button>
       <button onclick="press('*')">*</button>
-
       <button onclick="press('1')">1</button>
       <button onclick="press('2')">2</button>
       <button onclick="press('3')">3</button>
       <button onclick="press('-')">-</button>
-
       <button onclick="press('0')">0</button>
       <button onclick="press('.')">.</button>
       <button onclick="calculate()">=</button>
       <button onclick="press('+')">+</button>
-
       <button onclick="clearDisplay()" style="grid-column: span 4; background: #a00;">C</button>
     </div>
   </div>
 
   <script>
     const display = document.getElementById('display');
+    const expression = document.getElementById('expression');
     const calc = document.getElementById('calc');
     const emojis = ['💰', '🪙', '💴', '💵', '💶', '💷', '💸'];
     let rawInput = '';
@@ -146,26 +141,23 @@
       if (!isFinite(value)) return value;
       const parts = value.toString().split('.');
       parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-      return parts.join('.')
+      return parts.join('.');
     }
 
     function press(key) {
-      if (display.innerText === '0' || rawInput === '0') rawInput = '';
+      if (display.innerText === '0' && rawInput === '') rawInput = '';
       rawInput += key;
-      try {
-        const result = eval(rawInput);
-        display.innerText = formatNumber(result);
-      } catch {
-        display.innerText = rawInput;
-      }
+      expression.innerText = rawInput;
+      display.innerText = rawInput;
       triggerMoneyEffect();
     }
 
     function calculate() {
       try {
-        const result = eval(rawInput);
-        rawInput = result.toString();
+        const result = Function(`'use strict'; return (${rawInput})`)();
         display.innerText = formatNumber(result);
+        expression.innerText = rawInput;
+        rawInput = result.toString();
       } catch (e) {
         display.innerText = 'Error';
       }
@@ -175,6 +167,7 @@
     function clearDisplay() {
       rawInput = '';
       display.innerText = '0';
+      expression.innerText = '\u00a0';
     }
 
     function triggerMoneyEffect() {
@@ -191,7 +184,7 @@
         money.style.top = calcRect.top + calcRect.height / 2 + 'px';
         money.style.setProperty('--x', `${x}px`);
         money.style.setProperty('--y', `${y}px`);
-        money.style.setProperty('--duration', (2 + Math.random() * 1).toFixed(2) + 's');
+        money.style.setProperty('--duration', (2 + Math.random()).toFixed(2) + 's');
         document.body.appendChild(money);
         setTimeout(() => money.remove(), 5000);
       }
@@ -211,18 +204,18 @@
         ArrowDown: '-',
         ArrowLeft: '*',
         ArrowRight: '/',
-        Enter: '=',
-        '=': '=',
-        Backspace: 'C'
+        Backspace: 'C',
+        ' ': 'clear'
       };
+
       if (e.key >= '0' && e.key <= '9') {
         press(e.key);
-      } else if (['+', '-', '*', '/', '.'].includes(e.key)) {
+      } else if (["+", "-", "*", "/", "."].includes(e.key)) {
         press(e.key);
+      } else if (e.key === 'Enter' || e.key === '=') {
+        calculate();
       } else if (keyMap[e.key]) {
-        if (keyMap[e.key] === '=') {
-          calculate();
-        } else if (keyMap[e.key] === 'C') {
+        if (keyMap[e.key] === 'C' || keyMap[e.key] === 'clear') {
           clearDisplay();
         } else {
           press(keyMap[e.key]);
