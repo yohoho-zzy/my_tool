@@ -62,20 +62,38 @@
     .money {
       position: absolute;
       font-size: 36px;
-      animation: fall var(--duration, 2s) ease forwards;
+      animation: explode var(--duration, 2.5s) ease-out forwards;
       pointer-events: none;
       z-index: 1;
+      opacity: 0;
     }
 
-    @keyframes fall {
+    @keyframes explode {
       0% {
         opacity: 1;
-        transform: translateY(0) rotate(0deg);
+        transform: translate(0, 0) scale(1);
       }
       100% {
         opacity: 0;
-        transform: translateY(120vh) rotate(1080deg);
+        transform: translate(var(--x), var(--y)) rotate(1080deg) scale(0.6);
       }
+    }
+
+    .flash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 255, 153, 0.15);
+      animation: flashfade 0.3s ease-out;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    @keyframes flashfade {
+      from { opacity: 0.3; }
+      to { opacity: 0; }
     }
 
     .shake {
@@ -160,16 +178,29 @@
     }
 
     function triggerMoneyEffect() {
+      const calcRect = calc.getBoundingClientRect();
       for (let i = 0; i < 20; i++) {
         const money = document.createElement('div');
         money.className = 'money';
-        money.style.left = Math.random() * window.innerWidth + 'px';
-        money.style.top = -Math.random() * 100 + 'px';
-        money.style.setProperty('--duration', (2 + Math.random() * 2).toFixed(2) + 's');
         money.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = 200 + Math.random() * 400;
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
+        money.style.left = calcRect.left + calcRect.width / 2 + 'px';
+        money.style.top = calcRect.top + calcRect.height / 2 + 'px';
+        money.style.setProperty('--x', `${x}px`);
+        money.style.setProperty('--y', `${y}px`);
+        money.style.setProperty('--duration', (2 + Math.random() * 1).toFixed(2) + 's');
         document.body.appendChild(money);
-        setTimeout(() => money.remove(), 4000);
+        setTimeout(() => money.remove(), 5000);
       }
+
+      const flash = document.createElement('div');
+      flash.className = 'flash';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 300);
+
       calc.classList.add('shake');
       setTimeout(() => calc.classList.remove('shake'), 300);
     }
