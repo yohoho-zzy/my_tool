@@ -61,8 +61,8 @@
 
     .money {
       position: absolute;
-      font-size: 24px;
-      animation: fall 1.5s ease forwards;
+      font-size: 36px;
+      animation: fall var(--duration, 2s) ease forwards;
       pointer-events: none;
       z-index: 1;
     }
@@ -74,7 +74,7 @@
       }
       100% {
         opacity: 0;
-        transform: translateY(120vh) rotate(720deg);
+        transform: translateY(120vh) rotate(1080deg);
       }
     }
 
@@ -164,10 +164,11 @@
         const money = document.createElement('div');
         money.className = 'money';
         money.style.left = Math.random() * window.innerWidth + 'px';
-        money.style.top = '-30px';
+        money.style.top = -Math.random() * 100 + 'px';
+        money.style.setProperty('--duration', (2 + Math.random() * 2).toFixed(2) + 's');
         money.innerText = emojis[Math.floor(Math.random() * emojis.length)];
         document.body.appendChild(money);
-        setTimeout(() => money.remove(), 1500);
+        setTimeout(() => money.remove(), 4000);
       }
       calc.classList.add('shake');
       setTimeout(() => calc.classList.remove('shake'), 300);
