@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Money Calculator</title>
+  <style>
+    body {
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .calculator {
+      background: #222;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      width: 300px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .display {
+      background: #111;
+      color: #0f0;
+      font-size: 2em;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      text-align: right;
+      overflow-x: auto;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .buttons button {
+      padding: 20px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      background: #333;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .buttons button:hover {
+      background: #444;
+    }
+
+    .money {
+      position: absolute;
+      font-size: 24px;
+      animation: fall 1.5s ease forwards;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes fall {
+      0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(120vh) rotate(720deg);
+      }
+    }
+
+    .shake {
+      animation: shake 0.3s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator" id="calc">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+      <button onclick="press('7')">7</button>
+      <button onclick="press('8')">8</button>
+      <button onclick="press('9')">9</button>
+      <button onclick="press('/')">/</button>
+
+      <button onclick="press('4')">4</button>
+      <button onclick="press('5')">5</button>
+      <button onclick="press('6')">6</button>
+      <button onclick="press('*')">*</button>
+
+      <button onclick="press('1')">1</button>
+      <button onclick="press('2')">2</button>
+      <button onclick="press('3')">3</button>
+      <button onclick="press('-')">-</button>
+
+      <button onclick="press('0')">0</button>
+      <button onclick="press('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="press('+')">+</button>
+
+      <button onclick="clearDisplay()" style="grid-column: span 4; background: #a00;">C</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    const calc = document.getElementById('calc');
+    const emojis = ['💰', '🪙', '💴', '💵', '💶', '💷', '💸'];
+    let rawInput = '';
+
+    function formatNumber(value) {
+      if (!isFinite(value)) return value;
+      const parts = value.toString().split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return parts.join('.')
+    }
+
+    function press(key) {
+      if (display.innerText === '0' || rawInput === '0') rawInput = '';
+      rawInput += key;
+      try {
+        const result = eval(rawInput);
+        display.innerText = formatNumber(result);
+      } catch {
+        display.innerText = rawInput;
+      }
+      triggerMoneyEffect();
+    }
+
+    function calculate() {
+      try {
+        const result = eval(rawInput);
+        rawInput = result.toString();
+        display.innerText = formatNumber(result);
+      } catch (e) {
+        display.innerText = 'Error';
+      }
+      triggerMoneyEffect();
+    }
+
+    function clearDisplay() {
+      rawInput = '';
+      display.innerText = '0';
+    }
+
+    function triggerMoneyEffect() {
+      for (let i = 0; i < 20; i++) {
+        const money = document.createElement('div');
+        money.className = 'money';
+        money.style.left = Math.random() * window.innerWidth + 'px';
+        money.style.top = '-30px';
+        money.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        document.body.appendChild(money);
+        setTimeout(() => money.remove(), 1500);
+      }
+      calc.classList.add('shake');
+      setTimeout(() => calc.classList.remove('shake'), 300);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      const keyMap = {
+        ArrowUp: '+',
+        ArrowDown: '-',
+        ArrowLeft: '*',
+        ArrowRight: '/',
+        Enter: '=',
+        '=': '=',
+        Backspace: 'C'
+      };
+      if (e.key >= '0' && e.key <= '9') {
+        press(e.key);
+      } else if (['+', '-', '*', '/', '.'].includes(e.key)) {
+        press(e.key);
+      } else if (keyMap[e.key]) {
+        if (keyMap[e.key] === '=') {
+          calculate();
+        } else if (keyMap[e.key] === 'C') {
+          clearDisplay();
+        } else {
+          press(keyMap[e.key]);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
