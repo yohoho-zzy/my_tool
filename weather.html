@@ -71,11 +71,11 @@
         return await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(
             pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-            () => resolve({ lat: 35.6764, lon: 139.6500, fallback: true }) // 默认东京
+            () => resolve({ lat: 35.6764, lon: 139.6500, fallback: true })
           );
         });
       } catch {
-        return { lat: 35.6764, lon: 139.6500, fallback: true }; // 默认东京
+        return { lat: 35.6764, lon: 139.6500, fallback: true };
       }
     }
 
@@ -102,6 +102,18 @@
       return map[code] || ["未知", "❓"];
     }
 
+    function isRainy(code) {
+      return [51, 53, 55, 61, 63, 65, 95, 96, 99].includes(code);
+    }
+
+    function isSnowy(code) {
+      return [71, 73, 75].includes(code);
+    }
+
+    function isCloudy(code) {
+      return [1, 2, 3, 45, 48].includes(code);
+    }
+
     async function init() {
       const params = new URLSearchParams(location.search);
       const city = params.get("city");
@@ -113,27 +125,52 @@
       if (!city) {
         try {
           const loc = await getLocation();
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weathercode&timezone=auto`);
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,weathercode,precipitation,cloudcover,uv_index,visibility,windspeed_10m&timezone=auto`);
           const data = await res.json();
           document.getElementById("title").textContent = (loc.fallback ? "默认位置（东京）" : "当前位置") + " - 今日每小时天气";
 
           const hours = data.hourly.time;
           const temps = data.hourly.temperature_2m;
           const codes = data.hourly.weathercode;
+          const precipitation = data.hourly.precipitation;
+          const cloudcover = data.hourly.cloudcover;
+          const uvindex = data.hourly.uv_index;
+          const visibility = data.hourly.visibility;
+          const windspeed = data.hourly.windspeed_10m;
 
           for (let i = 0; i < hours.length; i++) {
             const hourStr = hours[i].slice(11, 16);
             if (!hours[i].startsWith(now.toISOString().slice(0, 10))) continue;
 
+            const code = codes[i];
+            const [desc, icon] = getWeatherDescription(code);
+            const tempClass = temps[i] >= 30 ? "hot" : temps[i] <= 5 ? "cold" : "";
+
+            let extra = `<div class=\"desc\">风速：${windspeed[i]} km/h</div>`;
+            if (isRainy(code)) {
+              extra += `<div class=\"desc\">降水量：${precipitation[i]} mm</div>`;
+            }
+            if (isSnowy(code)) {
+              extra += `<div class=\"desc\">降雪量：${precipitation[i]} mm</div>`;
+            }
+            if (isCloudy(code)) {
+              extra += `<div class=\"desc\">云量：${cloudcover[i]}%</div>`;
+            }
+            if (code === 0) {
+              extra += `<div class=\"desc\">紫外线指数：${uvindex[i]}</div>`;
+            }
+            if (visibility[i] != null) {
+              extra += `<div class=\"desc\">能见度：${visibility[i]} m</div>`;
+            }
+
             const box = document.createElement("div");
             box.className = "day-box" + (parseInt(hourStr.slice(0, 2)) === currentHour ? " highlight" : "");
-            const [desc, icon] = getWeatherDescription(codes[i]);
-            const tempClass = temps[i] >= 30 ? "hot" : temps[i] <= 5 ? "cold" : "";
             box.innerHTML = `
               <h3>${hourStr}</h3>
               <div class="weather-icon">${icon}</div>
               <div class="weather-type">${desc}</div>
               <div class="temp ${tempClass}">${temps[i]}℃</div>
+              ${extra}
             `;
             container.appendChild(box);
           }
