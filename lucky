@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>抽奖小工具</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      max-width: 700px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .prize-list {
+      min-width: 250px;
+      font-size: 12px;
+      color: #333;
+    }
+
+    .prize-list table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .prize-list th, .prize-list td {
+      border: 1px solid #ccc;
+      padding: 4px 6px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .prize-list th {
+      background-color: #f8f8f8;
+      font-weight: bold;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 200px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .circle-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: bold;
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .circle-reset {
+      background-color: #2196f3; /* 蓝 */
+    }
+    .circle-plus {
+      background-color: #f44336; /* 红 */
+    }
+
+    .draw-btn {
+      font-size: 14px;
+      padding: 6px 20px;
+      cursor: pointer;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .result {
+      width: 180px;
+      height: 80px;
+      padding: 6px;
+      border: 2px dashed #4caf50;
+      border-radius: 8px;
+      background: #fcfcfc;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      justify-content: flex-start;
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .result-single {
+      font-size: 16px;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .result span {
+      font-size: 10px;
+      margin: 1px 4px;
+    }
+
+    .result-big {
+      font-size: 18px;
+      font-weight: bold;
+      width: 100%;
+      text-align: center;
+      margin-top: 18px;
+    }
+
+    .note {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .rate-red { color: red; }
+    .rate-gold { color: goldenrod; }
+    .rate-purple { color: purple; }
+    .rate-blue { color: steelblue; }
+    .rate-green { color: seagreen; }
+    .rate-gray { color: gray; }
+    .delta {
+      color: black;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="prize-list">
+    <table>
+      <thead>
+        <tr><th>奖品</th><th>概率</th></tr>
+      </thead>
+      <tbody id="prizeTableBody">
+        <tr><td colspan="2">加载中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="right-panel">
+    <div class="button-row">
+      <button class="circle-btn circle-reset" id="countBtn" onclick="resetCounts()">0</button>
+      <button class="draw-btn" onclick="startDraw(1)">抽奖</button>
+      <button class="circle-btn circle-plus" onclick="startDraw(10)">+10</button>
+    </div>
+    <div class="result result-single" id="result">等待中</div>
+    <div class="note" id="noteText">?prizes=SSR:1,SR:3,R:10,N:16</div>
+  </div>
+</div>
+
+<script>
+  const resultDiv = document.getElementById("result");
+  const prizeTable = document.getElementById("prizeTableBody");
+  const countBtn = document.getElementById("countBtn");
+  const prizes = getPrizeDataFromUrl();
+  let totalCount = 0;
+  let withRate = [];
+
+  function getPrizeDataFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const prizeStr = params.get("prizes");
+    if (!prizeStr) return [];
+    return prizeStr.split(",").map(item => {
+      const [name, weightStr] = item.split(":");
+      const weight = parseInt(weightStr);
+      return { name: name.trim(), weight, count: 0 };
+    }).filter(p => p.name && !isNaN(p.weight));
+  }
+
+  function getColorClass(rate) {
+    if (rate <= 1) return "rate-red";
+    if (rate <= 5) return "rate-gold";
+    if (rate <= 10) return "rate-purple";
+    if (rate <= 25) return "rate-blue";
+    if (rate <= 40) return "rate-green";
+    return "rate-gray";
+  }
+
+  function updatePrizeTable(recentMap = {}) {
+    const total = prizes.reduce((sum, p) => sum + p.weight, 0);
+    withRate = prizes.map(p => ({
+      ...p,
+      rate: (p.weight / total) * 100
+    })).sort((a, b) => a.rate - b.rate);
+
+    prizeTable.innerHTML = withRate.map(p => {
+      const rate = p.rate.toFixed(1);
+      const cls = getColorClass(p.rate);
+      const deltaText = recentMap[p.name] ? `<span class="delta">+${recentMap[p.name]}</span>` : "";
+      return `<tr><td class="${cls}">[${p.count}] ${p.name} ${deltaText}</td><td class="${cls}">${rate}%</td></tr>`;
+    }).join("");
+  }
+
+  function pickPrize() {
+    const total = prizes.reduce((sum, p) => sum + p.weight, 0);
+    const r = Math.random() * total;
+    let acc = 0;
+    for (const p of prizes) {
+      acc += p.weight;
+      if (r < acc) return p.name;
+    }
+    return prizes[prizes.length - 1].name;
+  }
+
+  function startDraw(times) {
+    if (prizes.length === 0) return;
+    document.getElementById("noteText").style.display = "none";
+    resultDiv.className = "result";
+
+    let count = 0;
+    const max = 20;
+    const interval = 40;
+    const flashInterval = setInterval(() => {
+      const name = prizes[Math.floor(Math.random() * prizes.length)].name;
+      resultDiv.innerHTML = `<span>🎲 ${name}</span>`;
+      count++;
+      if (count >= max) {
+        clearInterval(flashInterval);
+        doFinalDraw(times);
+      }
+    }, interval);
+  }
+
+  function doFinalDraw(times) {
+    const map = {};
+    resultDiv.innerHTML = "";
+    totalCount += times;
+    countBtn.innerText = totalCount;
+
+    for (let i = 0; i < times; i++) {
+      const name = pickPrize();
+      const prize = prizes.find(p => p.name === name);
+      prize.count++;
+      map[name] = (map[name] || 0) + 1;
+    }
+
+    const totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
+
+    if (times === 1) {
+      const name = Object.keys(map)[0];
+      const p = prizes.find(x => x.name === name);
+      const cls = getColorClass((p.weight / totalWeight) * 100);
+      resultDiv.className = `result result-single ${cls}`;
+      resultDiv.innerHTML = `<div class="result-big">🎉 ${name}</div>`;
+    } else {
+      resultDiv.className = "result";
+      Object.entries(map).forEach(([name, count]) => {
+        const p = prizes.find(p => p.name === name);
+        const cls = getColorClass((p.weight / totalWeight) * 100);
+        const span = document.createElement("span");
+        span.className = cls;
+        span.innerText = `${name} x${count}`;
+        resultDiv.appendChild(span);
+      });
+    }
+
+    updatePrizeTable(map);
+  }
+
+  function resetCounts() {
+    prizes.forEach(p => p.count = 0);
+    totalCount = 0;
+    countBtn.innerText = "0";
+    updatePrizeTable();
+    resultDiv.innerText = "已重置";
+    resultDiv.className = "result result-single";
+  }
+
+  updatePrizeTable();
+</script>
+
+</body>
+</html>
