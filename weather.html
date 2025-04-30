@@ -48,7 +48,6 @@
     .weather-type {
       font-size: 0.95rem;
       font-weight: bold;
-      color: #444;
       margin-bottom: 4px;
     }
     .weather-icon {
@@ -59,6 +58,10 @@
       background-color: #ffefc2;
       font-weight: bold;
     }
+    .rainy .weather-type { color: #007bff; }
+    .snowy .weather-type { color: #5bc0de; }
+    .stormy .weather-type { color: #d9534f; }
+    .foggy .weather-type { color: #999; }
   </style>
 </head>
 <body>
@@ -66,9 +69,73 @@
   <div class="weather-container" id="weather"></div>
 
   <script>
+    function getWeatherDescription(code) {
+      const map = {
+        0: ["晴天", "☀️"],
+        1: ["基本晴朗", "🌤"],
+        2: ["部分多云", "⛅"],
+        3: ["阴天", "☁️"],
+        45: ["薄雾", "🌫"],
+        48: ["雾霭（结冰）", "🌫"],
+        51: ["轻微毛毛雨", "🌦"],
+        53: ["中等毛毛雨", "🌦"],
+        55: ["浓密毛毛雨", "🌧"],
+        56: ["轻微冻毛毛雨", "🌧"],
+        57: ["浓密冻毛毛雨", "🌧"],
+        61: ["小雨", "🌧"],
+        63: ["中雨", "🌧"],
+        65: ["大雨", "🌧"],
+        66: ["小冻雨", "🌧"],
+        67: ["大冻雨", "🌧"],
+        71: ["小雪", "🌨"],
+        73: ["中雪", "🌨"],
+        75: ["大雪", "❄️"],
+        77: ["霰/雪粒", "❄️"],
+        80: ["轻微阵雨", "🌦"],
+        81: ["中等阵雨", "🌧"],
+        82: ["强烈阵雨", "🌧"],
+        85: ["小阵雪", "🌨"],
+        86: ["大阵雪", "❄️"],
+        95: ["雷雨", "⛈"],
+        96: ["雷雨伴小冰雹", "⛈"],
+        99: ["雷雨伴大冰雹", "⛈"]
+      };
+      return map[code] || ["未知", "❓"];
+    }
+
+    function getWindIconAndLevel(speed) {
+      if (speed < 2) return ["🍃", "无风"];
+      if (speed < 6) return ["🌬", "微风"];
+      if (speed < 12) return ["🌬", "轻风"];
+      if (speed < 20) return ["🌬", "和风"];
+      if (speed < 29) return ["💨", "强风"];
+      if (speed < 39) return ["💨", "疾风"];
+      return ["🌪", "烈风"];
+    }
+
+    function getUvLevelIcon(uv) {
+      if (uv < 3) return ["🟢 低", "green"];
+      if (uv < 6) return ["🟡 中", "orange"];
+      if (uv < 8) return ["🟠 高", "orangered"];
+      if (uv < 11) return ["🔴 很高", "red"];
+      return ["🟣 极高", "purple"];
+    }
+
+    function isRainy(code) {
+      return [51, 53, 55, 61, 63, 65, 66, 67, 80, 81, 82].includes(code);
+    }
+
+    function isSnowy(code) {
+      return [71, 73, 75, 77, 85, 86].includes(code);
+    }
+
+    function isCloudy(code) {
+      return [1, 2, 3, 45, 48].includes(code);
+    }
+
     async function getLocation() {
       try {
-        return await new Promise((resolve, reject) => {
+        return await new Promise((resolve) => {
           navigator.geolocation.getCurrentPosition(
             pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
             () => resolve({ lat: 35.6764, lon: 139.6500, fallback: true })
@@ -88,30 +155,6 @@
         lon: data.results[0].longitude,
         name: data.results[0].name
       };
-    }
-
-    function getWeatherDescription(code) {
-      const map = {
-        0: ["晴天", "☀️"], 1: ["多云", "🌤"], 2: ["部分多云", "⛅"], 3: ["阴天", "☁️"],
-        45: ["薄雾", "🌫"], 48: ["雾霭", "🌫"],
-        51: ["小毛毛雨", "🌦"], 53: ["中毛毛雨", "🌧"], 55: ["大毛毛雨", "🌧"],
-        61: ["小雨", "🌧"], 63: ["中雨", "🌧"], 65: ["大雨", "🌧"],
-        71: ["小雪", "🌨"], 73: ["中雪", "❄️"], 75: ["大雪", "❄️"],
-        95: ["雷阵雨", "⛈"], 96: ["雷阵雨伴小冰雹", "⛈"], 99: ["雷阵雨伴大冰雹", "⛈"]
-      };
-      return map[code] || ["未知", "❓"];
-    }
-
-    function isRainy(code) {
-      return [51, 53, 55, 61, 63, 65, 95, 96, 99].includes(code);
-    }
-
-    function isSnowy(code) {
-      return [71, 73, 75].includes(code);
-    }
-
-    function isCloudy(code) {
-      return [1, 2, 3, 45, 48].includes(code);
     }
 
     async function init() {
@@ -146,25 +189,33 @@
             const [desc, icon] = getWeatherDescription(code);
             const tempClass = temps[i] >= 30 ? "hot" : temps[i] <= 5 ? "cold" : "";
 
-            let extra = `<div class=\"desc\">风速：${windspeed[i]} km/h</div>`;
+            const [windIcon, windLevel] = getWindIconAndLevel(windspeed[i]);
+            let weatherClass = "";
+            if (isRainy(code)) weatherClass = "rainy";
+            else if (isSnowy(code)) weatherClass = "snowy";
+            else if ([95, 96, 99].includes(code)) weatherClass = "stormy";
+            else if ([45, 48].includes(code)) weatherClass = "foggy";
+
+            let extra = `<div class="desc">${windIcon} 风速：${windspeed[i]} km/h（${windLevel}）</div>`;
             if (isRainy(code)) {
-              extra += `<div class=\"desc\">降水量：${precipitation[i]} mm</div>`;
+              extra += `<div class="desc">🌧 降水量：${precipitation[i]} mm</div>`;
             }
             if (isSnowy(code)) {
-              extra += `<div class=\"desc\">降雪量：${precipitation[i]} mm</div>`;
+              extra += `<div class="desc">🌨 降雪量：${precipitation[i]} mm</div>`;
             }
             if (isCloudy(code)) {
-              extra += `<div class=\"desc\">云量：${cloudcover[i]}%</div>`;
+              extra += `<div class="desc">☁️ 云量：${cloudcover[i]}%</div>`;
             }
-            if (code === 0) {
-              extra += `<div class=\"desc\">紫外线指数：${uvindex[i]}</div>`;
+            if (uvindex[i] != null) {
+              const [uvDesc, uvColor] = getUvLevelIcon(uvindex[i]);
+              extra += `<div class="desc" style="color:${uvColor}">☀️ UV：${uvindex[i]}（${uvDesc}）</div>`;
             }
             if (visibility[i] != null) {
-              extra += `<div class=\"desc\">能见度：${visibility[i]} m</div>`;
+              extra += `<div class="desc">👁 能见度：${visibility[i]} m</div>`;
             }
 
             const box = document.createElement("div");
-            box.className = "day-box" + (parseInt(hourStr.slice(0, 2)) === currentHour ? " highlight" : "");
+            box.className = `day-box${parseInt(hourStr.slice(0, 2)) === currentHour ? " highlight" : ""} ${weatherClass}`;
             box.innerHTML = `
               <h3>${hourStr}</h3>
               <div class="weather-icon">${icon}</div>
@@ -206,8 +257,8 @@
             <div class="weather-icon">${weatherIcon}</div>
             <div class="weather-type">${weatherDesc}</div>
             <div class="temp ${tempClass}">${min}℃ ~ ${max}℃</div>
-            <div class="desc">降水概率：${rain}%</div>
-            <div class="desc">最大风速：${wind} km/h</div>
+            <div class="desc">🌧 降水概率：${rain}%</div>
+            <div class="desc">💨 最大风速：${wind} km/h</div>
           `;
           container.appendChild(box);
         }
