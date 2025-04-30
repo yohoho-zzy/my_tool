@@ -104,21 +104,21 @@
     }
 
     function getWindIconAndLevel(speed) {
-      if (speed < 2) return ["🍃", "无风"];
-      if (speed < 6) return ["🌬", "微风"];
-      if (speed < 12) return ["🌬", "轻风"];
-      if (speed < 20) return ["🌬", "和风"];
-      if (speed < 29) return ["💨", "强风"];
-      if (speed < 39) return ["💨", "疾风"];
-      return ["🌪", "烈风"];
+      if (speed < 2) return ["", "无风"];
+      if (speed < 6) return ["", "微风"];
+      if (speed < 12) return ["", "轻风"];
+      if (speed < 20) return ["", "和风"];
+      if (speed < 29) return ["", "强风"];
+      if (speed < 39) return ["", "疾风"];
+      return ["", "烈风"];
     }
 
     function getUvLevelIcon(uv) {
-      if (uv < 3) return ["🟢 低", "green"];
-      if (uv < 6) return ["🟡 中", "orange"];
-      if (uv < 8) return ["🟠 高", "orangered"];
-      if (uv < 11) return ["🔴 很高", "red"];
-      return ["🟣 极高", "purple"];
+      if (uv < 3) return ["🟢低", "green"];
+      if (uv < 6) return ["🟡中", "orange"];
+      if (uv < 8) return ["🟠高", "orangered"];
+      if (uv < 11) return ["🔴很高", "red"];
+      return ["🟣极高", "purple"];
     }
 
     function isRainy(code) {
@@ -196,22 +196,22 @@
             else if ([95, 96, 99].includes(code)) weatherClass = "stormy";
             else if ([45, 48].includes(code)) weatherClass = "foggy";
 
-            let extra = `<div class="desc">${windIcon} 风速：${windspeed[i]} km/h（${windLevel}）</div>`;
+            let extra = `<div class="desc">${windIcon}风速：${windspeed[i]} km/h（${windLevel}）</div>`;
             if (isRainy(code)) {
-              extra += `<div class="desc">🌧 降水量：${precipitation[i]} mm</div>`;
+              extra += `<div class="desc">降水量：${precipitation[i]} mm</div>`;
             }
             if (isSnowy(code)) {
-              extra += `<div class="desc">🌨 降雪量：${precipitation[i]} mm</div>`;
+              extra += `<div class="desc">降雪量：${precipitation[i]} mm</div>`;
             }
             if (isCloudy(code)) {
-              extra += `<div class="desc">☁️ 云量：${cloudcover[i]}%</div>`;
+              extra += `<div class="desc">云量：${cloudcover[i]}%</div>`;
             }
             if (uvindex[i] != null) {
               const [uvDesc, uvColor] = getUvLevelIcon(uvindex[i]);
-              extra += `<div class="desc" style="color:${uvColor}">☀️ UV：${uvindex[i]}（${uvDesc}）</div>`;
+              extra += `<div class="desc" style="color:${uvColor}">UV：${uvindex[i]}（${uvDesc}）</div>`;
             }
             if (visibility[i] != null) {
-              extra += `<div class="desc">👁 能见度：${visibility[i]} m</div>`;
+              extra += `<div class="desc">能见度：${visibility[i]} m</div>`;
             }
 
             const box = document.createElement("div");
@@ -257,8 +257,8 @@
             <div class="weather-icon">${weatherIcon}</div>
             <div class="weather-type">${weatherDesc}</div>
             <div class="temp ${tempClass}">${min}℃ ~ ${max}℃</div>
-            <div class="desc">🌧 降水概率：${rain}%</div>
-            <div class="desc">💨 最大风速：${wind} km/h</div>
+            <div class="desc">降水概率：${rain}%</div>
+            <div class="desc">最大风速：${wind} km/h</div>
           `;
           container.appendChild(box);
         }
