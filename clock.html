@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>魔法时钟</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&display=swap');
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: radial-gradient(circle at center, #1b0036, #000);
+      color: #fff;
+      font-family: 'Uncial Antiqua', serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #magic-clock {
+      width: 280px;
+      height: 88px;
+      border: 2px solid #fff2;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 5px;
+      text-align: center;
+      position: relative;
+      transition: box-shadow 0.4s ease;
+      box-sizing: border-box;
+    }
+
+    .time-display, .kaomoji-display {
+      transition: opacity 0.3s ease-in-out;
+      font-size: 1.6em;
+      margin: 4px 0;
+    }
+
+    .date-display {
+      transition: opacity 0.3s ease-in-out;
+      font-size: 0.8em;
+      margin: 4px 0;
+    }
+
+    .kaomoji-display {
+      font-size: 1.5em;
+      text-shadow: 0 0 6px #fff;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .glowing {
+      box-shadow: 0 0 25px 8px #a64aff;
+      border-color: #a64aff;
+    }
+
+    /* ✨ 粒子特效 */
+    .particles {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      animation: float 5s linear infinite;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100%) scale(0.5);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100%) scale(1.2);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="magic-clock" class="glowing">
+    <div class="time-display hidden"></div>
+    <div class="date-display hidden"></div>
+    <div class="kaomoji-display">(❁´◡`❁)</div>
+    <div class="particles" id="particles-container"></div>
+  </div>
+
+  <script>
+    const clock = document.getElementById('magic-clock');
+    const timeEl = clock.querySelector('.time-display');
+    const dateEl = clock.querySelector('.date-display');
+    const kaomojiEl = clock.querySelector('.kaomoji-display');
+
+    const kaomojis = ['(❁´◡`❁)', '╰(*°▽°*)╯', '٩(ˊ〇ˋ*)و', '(≧∇≦)ﾉ', 'o((>ω< ))o'];
+    let currentKaomoji = 0;
+    let showingClock = false;
+    let glowing = true;
+
+    function updateClock() {
+      const now = new Date();
+             timeEl.textContent = now.toLocaleTimeString('en-GB');
+             dateEl.textContent = now.toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function toggleDisplay() {
+      showingClock = !showingClock;
+      if (showingClock) {
+        timeEl.classList.remove('hidden');
+        dateEl.classList.remove('hidden');
+        kaomojiEl.classList.add('hidden');
+      } else {
+        timeEl.classList.add('hidden');
+        dateEl.classList.add('hidden');
+        currentKaomoji = (currentKaomoji + 1) % kaomojis.length;
+        kaomojiEl.textContent = kaomojis[currentKaomoji];
+        kaomojiEl.classList.remove('hidden');
+      }
+    }
+
+    function toggleGlow() {
+      glowing = !glowing;
+      clock.classList.toggle('glowing', glowing);
+    }
+
+    // Mobile tap / double tap
+    let lastTap = 0;
+    clock.addEventListener('touchend', (e) => {
+      const now = new Date().getTime();
+      if (now - lastTap < 300) {
+        toggleGlow(); // 仅控制发光
+      } else {
+        toggleDisplay(); // 单击切换内容
+      }
+      lastTap = now;
+    });
+
+    // PC hover logic
+    let hoverStart = 0;
+    let mouseYStart = 0;
+    let mouseXStart = 0;
+
+    clock.addEventListener('mouseenter', (e) => {
+      hoverStart = Date.now();
+      mouseYStart = e.clientY;
+      mouseXStart = e.clientX;
+    });
+
+    clock.addEventListener('mouseleave', (e) => {
+      const hoverDuration = Date.now() - hoverStart;
+      const dx = e.clientX - mouseXStart;
+      const dy = e.clientY - mouseYStart;
+
+      if (hoverDuration > 3000 && dx < -30) {
+        toggleGlow(); // 从左滑出，发光切换
+      } else if (dy < -30 && mouseYStart - e.clientY < 200) {
+        toggleDisplay(); // 从下进上出，切换内容
+      }
+    });
+  </script>
+</body>
+</html>
