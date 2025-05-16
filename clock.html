@@ -17,12 +17,10 @@
       justify-content: center;
       align-items: center;
       overflow: hidden;
-      position: relative;
     }
 
     #magic-clock {
       width: 240px;
-      height: auto;
       border: 2px solid #333;
       border-radius: 16px;
       background: #000;
@@ -32,12 +30,6 @@
       position: relative;
       transition: box-shadow 0.4s ease;
       box-sizing: border-box;
-      z-index: 10;
-    }
-
-    .time-display, .date-display, .kaomoji-display {
-      transition: opacity 0.3s ease-in-out;
-      display: block;
     }
 
     .time-display {
@@ -65,7 +57,7 @@
       border-color: #a64aff;
     }
 
-    /* 粒子全屏，默认隐藏 */
+    /* 粒子现在作为内部元素 */
     .particles {
       position: absolute;
       top: 0; left: 0;
@@ -73,11 +65,10 @@
       height: 100%;
       pointer-events: none;
       z-index: 1;
-      overflow: hidden;
       display: none;
     }
 
-    .glowing + .particles {
+    .glowing .particles {
       display: block;
     }
 
@@ -92,14 +83,14 @@
 
     @keyframes float {
       0% {
-        transform: translateY(100vh) scale(0.5);
+        transform: translateY(100%) scale(0.5);
         opacity: 0;
       }
       50% {
         opacity: 1;
       }
       100% {
-        transform: translateY(-100vh) scale(1.2);
+        transform: translateY(-100%) scale(1.2);
         opacity: 0;
       }
     }
@@ -110,8 +101,8 @@
     <div class="time-display"></div>
     <div class="date-display"></div>
     <div class="kaomoji-display hidden">(❁´◡`❁)</div>
+    <div class="particles" id="particles-container"></div>
   </div>
-  <div class="particles" id="particles-container"></div>
 
   <script>
     const clock = document.getElementById('magic-clock');
@@ -154,7 +145,6 @@
     function toggleGlow() {
       glowing = !glowing;
       clock.classList.toggle('glowing', glowing);
-      particles.style.display = glowing ? 'block' : 'none';
     }
 
     // Mobile tap / double tap
