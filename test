@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>长按计时按钮</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      padding: 20px 40px;
+      border: none;
+      border-radius: 12px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:active {
+      background-color: #0056b3;
+    }
+
+    button img {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="holdButton">
+    <img src="https://cdn-icons-png.flaticon.com/512/1828/1828817.png" alt="计时图标">
+    长按开始计时
+  </button>
+
+  <div id="result">按住按钮开始计时</div>
+
+  <script>
+    const button = document.getElementById('holdButton');
+    const result = document.getElementById('result');
+
+    let startTime = 0;
+
+    function formatDuration(ms) {
+      const seconds = (ms / 1000).toFixed(2);
+      return `${seconds} 秒`;
+    }
+
+    button.addEventListener('mousedown', () => {
+      startTime = Date.now();
+      result.textContent = '计时中...';
+    });
+
+    button.addEventListener('mouseup', () => {
+      if (startTime !== 0) {
+        const duration = Date.now() - startTime;
+        result.textContent = `持续时间：${formatDuration(duration)}`;
+        startTime = 0;
+      }
+    });
+
+    button.addEventListener('mouseleave', () => {
+      // 如果鼠标滑出按钮就取消
+      if (startTime !== 0) {
+        result.textContent = '计时已取消（鼠标移出）';
+        startTime = 0;
+      }
+    });
+
+    // 兼容触摸设备
+    button.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startTime = Date.now();
+      result.textContent = '计时中...';
+    });
+
+    button.addEventListener('touchend', () => {
+      if (startTime !== 0) {
+        const duration = Date.now() - startTime;
+        result.textContent = `持续时间：${formatDuration(duration)}`;
+        startTime = 0;
+      }
+    });
+  </script>
+
+</body>
+</html>
