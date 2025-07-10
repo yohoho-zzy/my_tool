@@ -2,105 +2,87 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>长按计时按钮</title>
+  <title>测试长按按钮</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Vuetify & MDI 图标 -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.5.14/dist/vuetify.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.3.67/css/materialdesignicons.min.css" rel="stylesheet">
   <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f0f0f0;
-    }
-
-    button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .audio-btn {
+      width: 180px;
+      height: 180px;
       font-size: 24px;
-      padding: 20px 40px;
-      border: none;
-      border-radius: 12px;
-      background-color: #007bff;
+    }
+
+    .audio-btn-active {
+      background-color: #ff5252 !important;
       color: white;
-      cursor: pointer;
-      transition: background-color 0.3s;
     }
 
-    button:active {
-      background-color: #0056b3;
-    }
-
-    button img {
-      width: 32px;
-      height: 32px;
-      margin-right: 10px;
-    }
-
-    #result {
+    #timer {
       margin-top: 20px;
       font-size: 20px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
+  <div id="app">
+    <v-app>
+      <v-container class="d-flex justify-center align-center" style="height: 100vh; flex-direction: column;">
+        <v-btn class="rounded-circle audio-btn"
+               :class="{ 'audio-btn-active': recording }"
+               @mousedown="startTranscribe"
+               @mouseup="stopTranscribe"
+               @mouseleave="stopTranscribe"
+               @touchstart="startTranscribe"
+               @touchend="stopTranscribe">
+          <v-icon>mdi-microphone-outline</v-icon>
+        </v-btn>
+        <div id="timer">{{ displayTime }}</div>
+      </v-container>
+    </v-app>
+  </div>
 
-  <button id="holdButton">
-    <img src="https://cdn-icons-png.flaticon.com/512/1828/1828817.png" alt="计时图标">
-    长按开始计时
-  </button>
-
-  <div id="result">按住按钮开始计时</div>
-
+  <!-- Vue & Vuetify -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.5.14/dist/vuetify.min.js"></script>
   <script>
-    const button = document.getElementById('holdButton');
-    const result = document.getElementById('result');
+    const { createApp, ref, computed } = Vue;
+    const { createVuetify } = Vuetify;
 
-    let startTime = 0;
+    const app = createApp({
+      setup() {
+        const recording = ref(false);
+        const startTime = ref(0);
+        const duration = ref(0);
 
-    function formatDuration(ms) {
-      const seconds = (ms / 1000).toFixed(2);
-      return `${seconds} 秒`;
-    }
+        const displayTime = computed(() => {
+          return recording.value ? '录音中...' : `录音时长：${(duration.value / 1000).toFixed(2)} 秒`;
+        });
 
-    button.addEventListener('mousedown', () => {
-      startTime = Date.now();
-      result.textContent = '计时中...';
-    });
+        const startTranscribe = () => {
+          startTime.value = Date.now();
+          recording.value = true;
+        };
 
-    button.addEventListener('mouseup', () => {
-      if (startTime !== 0) {
-        const duration = Date.now() - startTime;
-        result.textContent = `持续时间：${formatDuration(duration)}`;
-        startTime = 0;
+        const stopTranscribe = () => {
+          if (!recording.value) return;
+          duration.value = Date.now() - startTime.value;
+          recording.value = false;
+        };
+
+        return {
+          recording,
+          displayTime,
+          startTranscribe,
+          stopTranscribe
+        };
       }
     });
 
-    button.addEventListener('mouseleave', () => {
-      // 如果鼠标滑出按钮就取消
-      if (startTime !== 0) {
-        result.textContent = '计时已取消（鼠标移出）';
-        startTime = 0;
-      }
-    });
-
-    // 兼容触摸设备
-    button.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      startTime = Date.now();
-      result.textContent = '计时中...';
-    });
-
-    button.addEventListener('touchend', () => {
-      if (startTime !== 0) {
-        const duration = Date.now() - startTime;
-        result.textContent = `持续时间：${formatDuration(duration)}`;
-        startTime = 0;
-      }
-    });
+    const vuetify = createVuetify();
+    app.use(vuetify).mount('#app');
   </script>
-
 </body>
 </html>
