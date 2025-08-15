@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>随机数组生成器</title>
+<style>
+  body{
+    font-family: sans-serif;
+    background:#f9fafb;
+    padding:20px;
+    color:#111;
+  }
+  h1{font-size:20px;margin-bottom:10px;}
+  .meta{color:#555;margin-bottom:10px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
+  .card{
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:12px;
+    text-align:center;
+    box-shadow:0 4px 8px rgba(0,0,0,.04);
+  }
+  .title{font-size:13px;color:#666;margin-bottom:6px;}
+  .value{font-size:24px;font-weight:700;}
+  button{
+    margin-top:15px;
+    padding:8px 14px;
+    border:none;
+    border-radius:6px;
+    background:#2563eb;
+    color:#fff;
+    font-size:14px;
+    cursor:pointer;
+  }
+  button:hover{background:#1d4ed8;}
+  .err{color:#b91c1c;}
+</style>
+</head>
+<body>
+<h1>随机数组生成器</h1>
+<div class="meta" id="meta"></div>
+<div class="grid" id="grid"></div>
+<button id="gen">生成</button>
+
+<script>
+function parseParams(){
+  const sp = new URLSearchParams(location.search);
+  const group = Number(sp.get("group") || 0);
+  const maxRaw = sp.getAll("max").length ? sp.getAll("max") : (sp.get("max") ? [sp.get("max")] : []);
+  const maxList = maxRaw.flatMap(s => s.split(",")).map(s => s.trim()).filter(Boolean).map(Number).filter(n => n>0);
+  return {group, maxList};
+}
+
+function rand1toMax(max){
+  const buf = new Uint32Array(1);
+  const limit = Math.floor(0xFFFFFFFF / max) * max - 1;
+  while(true){
+    crypto.getRandomValues(buf);
+    if (buf[0] <= limit) return (buf[0] % max) + 1;
+  }
+}
+
+function render(){
+  const {group, maxList} = parseParams();
+  const meta = document.getElementById("meta");
+  const grid = document.getElementById("grid");
+  if(!group || !maxList.length){
+    meta.innerHTML = `<span class="err">请在 URL 中设置 ?group=3&max=10,15,30</span>`;
+    grid.innerHTML = "";
+    return;
+  }
+  meta.textContent = `组数：${group}；上限：${maxList.join(", ")}`;
+  grid.innerHTML = "";
+  for(let i=0;i<group && i<maxList.length;i++){
+    const max = maxList[i];
+    const val = rand1toMax(max);
+    grid.innerHTML += `<div class="card"><div class="title">第 ${i+1} 组 (1~${max})</div><div class="value">${val}</div></div>`;
+  }
+}
+
+document.getElementById("gen").addEventListener("click", render);
+
+// 初始显示一次
+render();
+</script>
+</body>
+</html>
